@@ -4,7 +4,7 @@ organization  := "org.geneontology"
 
 name          := "whelk-performance"
 
-version       := "0.2.1.0"
+version       := "0.2.2.0"
 
 publishArtifact in Test := false
 
@@ -22,7 +22,7 @@ libraryDependencies ++= {
   Seq(
     "net.sourceforge.owlapi" %  "owlapi-distribution"    % "4.5.9",
     "org.phenoscape"         %% "scowl"                  % "1.3.2",
-    "org.geneontology"       %% "whelk"                  % "0.2.1",
+    "org.geneontology"       %% "whelk"                  % "0.2.2",
     "org.semanticweb.elk"    %  "elk-owlapi"             % "0.4.3",
     "com.outr"               %% "scribe-slf4j"           % "2.7.2"
   )
