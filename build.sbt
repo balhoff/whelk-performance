@@ -24,6 +24,7 @@ libraryDependencies ++= {
     "org.phenoscape"         %% "scowl"                  % "1.3.2",
     "org.geneontology"       %% "whelk"                  % "0.2.2",
     "org.semanticweb.elk"    %  "elk-owlapi"             % "0.4.3",
-    "com.outr"               %% "scribe-slf4j"           % "2.7.2"
+    "com.outr"               %% "scribe-slf4j"           % "2.7.2",
+    "io.monix"               %% "monix"                  % "3.0.0-RC1"
   )
 }
