@@ -73,7 +73,7 @@ object RunQueries {
     println(s"Query time: $queryTime")
     val writer = new PrintWriter(resultsFile, "utf-8")
     for {
-      (query, subclasses) <- results.seq.sortBy(_._1.toString)
+      (query, subclasses) <- results.toSeq.sortBy(_._1.toString)
       sorted = subclasses.map(_.toString).toList.sorted.mkString("\t")
     } writer.println(s"$query\t$sorted")
     writer.close()
