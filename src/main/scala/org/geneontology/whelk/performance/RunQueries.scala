@@ -27,7 +27,8 @@ object RunQueries {
     val manager = OWLManager.createOWLOntologyManager()
     val ontology = manager.loadOntology(IRI.create(ontologyFile))
     val baseOntologySize = ontology.getLogicalAxiomCount
-    val queries = GenerateQueries.getQueriesFromOntologyExpressions(ontology)
+    //val queries = GenerateQueries.getQueriesFromOntologyExpressions(ontology)
+    val queries = GenerateQueries.getQueriesFromPropertyRestrictions(ontology)
     println(s"Ontology size: $baseOntologySize")
     println(s"Query number: ${queries.size}")
     val (queriesToRun, axiomsToAdd) = if (shouldNameQueries) nameQueries(queries)
@@ -36,6 +37,8 @@ object RunQueries {
     val (reasoner, classificationTime) = time {
       reasonerFactory(reasonerName).createReasoner(ontology)
     }
+    val memoryUsed = Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory
+    println(s"Memory used after classification: $memoryUsed")
     println(s"Classification time: $classificationTime")
     val possiblyParallelQueriesToRun = if (parallelism > 1) {
       val parallelSeq = queriesToRun.par
@@ -48,6 +51,7 @@ object RunQueries {
         query -> reasoner.getSubClasses(query, false).getFlattened.asScala
       }
     }
+    println(s"Memory used after querying: $memoryUsed")
     reasoner.dispose()
     println(s"Query time: $queryTime")
     val writer = new PrintWriter(resultsFile, "utf-8")

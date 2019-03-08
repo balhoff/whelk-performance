@@ -46,6 +46,17 @@ object GenerateQueries {
     if isOnlyNamedOrIntersectionOrSomeValuesFrom(expression)
   } yield expression).toSet.toList
 
+  def getQueriesFromPropertyRestrictions(ontology: OWLOntology): List[OWLClassExpression] = {
+    val properties = ontology.getObjectPropertiesInSignature(Imports.INCLUDED).asScala.toList
+    val fillers = ontology.getClassesInSignature(Imports.INCLUDED).asScala.toList
+    for {
+      property <- properties
+      filler <- fillers
+      if !filler.isOWLThing
+      if !filler.isOWLNothing
+    } yield property some filler
+  }
+
   def isOnlyNamedOrIntersectionOrSomeValuesFrom(expression: OWLClassExpression): Boolean = expression match {
     case _: OWLClass                => true
     case s: OWLObjectSomeValuesFrom => (s.getNestedClassExpressions.asScala - s).forall(isOnlyNamedOrIntersectionOrSomeValuesFrom)
