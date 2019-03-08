@@ -12,6 +12,7 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.parallel.ForkJoinTaskSupport
+import scala.util.Random
 
 object RunQueries {
 
@@ -28,7 +29,8 @@ object RunQueries {
     val ontology = manager.loadOntology(IRI.create(ontologyFile))
     val baseOntologySize = ontology.getLogicalAxiomCount
     //val queries = GenerateQueries.getQueriesFromOntologyExpressions(ontology)
-    val queries = GenerateQueries.getQueriesFromPropertyRestrictions(ontology)
+    val initialQueries = GenerateQueries.getQueriesFromPropertyRestrictions(ontology)
+    val queries = Random.shuffle(initialQueries).take(initialQueries.size / 10)
     println(s"Ontology size: $baseOntologySize")
     println(s"Query number: ${queries.size}")
     val (queriesToRun, axiomsToAdd) = if (shouldNameQueries) nameQueries(queries)
