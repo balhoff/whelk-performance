@@ -3,10 +3,6 @@ package org.geneontology.whelk.performance
 import java.io.{File, PrintWriter}
 import java.util.concurrent.ForkJoinPool
 
-import monix.eval.Task
-//import monix.execution.Scheduler.Implicits.global
-import scala.concurrent.ExecutionContext.Implicits.global
-import monix.reactive.Observable
 import org.geneontology.whelk.owlapi.WhelkOWLReasonerFactory
 import org.phenoscape.scowl._
 import org.semanticweb.elk.owlapi.ElkReasonerFactory
@@ -16,8 +12,6 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.parallel.ForkJoinTaskSupport
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 
 object RunQueries {
 
@@ -43,37 +37,22 @@ object RunQueries {
       reasonerFactory(reasonerName).createReasoner(ontology)
     }
     println(s"Classification time: $classificationTime")
+    val possiblyParallelQueriesToRun = if (parallelism > 1) {
+      val parallelSeq = queriesToRun.par
+      val forkJoinPool = new ForkJoinPool(parallelism)
+      parallelSeq.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
+      parallelSeq
+    } else queriesToRun
     val (results, queryTime) = time {
-      val batches = queriesToRun.grouped(queriesToRun.size / parallelism).map(batch => Future {
-        batch.map(query => query -> reasoner.getSubClasses(query, false).getFlattened.asScala)
-      })
-      Await.result(Future.sequence(batches).map(_.flatten), Duration.Inf)
+      possiblyParallelQueriesToRun.map { query =>
+        query -> reasoner.getSubClasses(query, false).getFlattened.asScala
+      }
     }
-
-//    val observableQueries = Observable.fromIterable(queriesToRun)
-//    val processed = observableQueries.mapParallelUnordered(parallelism = parallelism) { query =>
-//      Task {
-//        query -> reasoner.getSubClasses(query, false).getFlattened.asScala
-//      }
-//    }
-    //    val possiblyParallelQueriesToRun = if (parallelism > 1) {
-    //      val parallelSeq = queriesToRun.par
-    //      val forkJoinPool = new ForkJoinPool(parallelism)
-    //      parallelSeq.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
-    //      parallelSeq
-    //    } else queriesToRun
-//    val (results, queryTime) = time {
-//      println("Running queries")
-//      processed.toListL.runSyncUnsafe(Duration.Inf)
-//      //      possiblyParallelQueriesToRun.map { query =>
-//      //        query -> reasoner.getSubClasses(query, false).getFlattened.asScala
-//      //      }
-//    }
     reasoner.dispose()
     println(s"Query time: $queryTime")
     val writer = new PrintWriter(resultsFile, "utf-8")
     for {
-      (query, subclasses) <- results.toSeq.sortBy(_._1.toString)
+      (query, subclasses) <- results.seq.sortBy(_._1.toString)
       sorted = subclasses.map(_.toString).toList.sorted.mkString("\t")
     } writer.println(s"$query\t$sorted")
     writer.close()
